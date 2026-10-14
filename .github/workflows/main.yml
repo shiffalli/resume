@@ -1,90 +1,24 @@
-import os
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+name: Daily Job Agent
 
-# Configuration for Shiffalli's Job Agent
-EMAIL_TO = "shiffalli@gmail.com"
-SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 587
+on:
+  schedule:
+    - cron: '0 12 * * *' # Runs everyday at 12:00 PM UTC (8:00 AM EST)
+  workflow_dispatch: # Allows manual trigger
 
-SMTP_USER = os.environ.get("SMTP_USER")
-SMTP_PASS = os.environ.get("SMTP_PASS")
+jobs:
+  run-job-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-def fetch_jobs():
-    return [
-        {
-            "title": "Regulatory Affairs Associate — Canada",
-            "company": "Ryvis Pharma",
-            "location": "Mississauga, ON",
-            "link": "https://www.linkedin.com/jobs/"
-        },
-        {
-            "title": "Regulatory Affairs, Compliance Specialist",
-            "company": "Nanz Pharma",
-            "location": "Brampton, ON",
-            "link": "https://www.linkedin.com/jobs/"
-        },
-        {
-            "title": "Associate, Quality Assurance (Investigations)",
-            "company": "Sun Pharma Canada",
-            "location": "Brampton, ON",
-            "link": "https://www.linkedin.com/jobs/"
-        },
-        {
-            "title": "QA Associate — Biologics",
-            "company": "Eurofins CDMO Alphora",
-            "location": "Mississauga, ON",
-            "link": "https://www.linkedin.com/jobs/"
-        }
-    ]
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-def send_email():
-    jobs = fetch_jobs()
-    
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = "🚀 Daily Pharma Regulatory & QA Job Feed (GTA / Orangeville Region)"
-    msg["From"] = SMTP_USER
-    msg["To"] = EMAIL_TO
-
-    html_content = """
-    <html>
-      <body style="font-family: Arial, sans-serif; color: #333;">
-        <h2>Daily Job Opportunities for Shiffalli Singla</h2>
-        <p>Here are your targeted entry-level and co-op positions in Regulatory Affairs and Quality Assurance within 50 km of Orangeville (Brampton, Mississauga, Toronto, Guelph):</p>
-        <hr>
-        <ul>
-    """
-    
-    for job in jobs:
-        html_content += f"""
-          <li style="margin-bottom: 15px;">
-            <strong>{job['title']}</strong><br>
-            <span style="color: #666;">Company:</span> {job['company']} | <span style="color: #666;">Location:</span> {job['location']}<br>
-            <a href="{job['link']}" target="_blank" style="color: #0066cc;">View Job & Apply</a>
-          </li>
-        """
-        
-    html_content += """
-        </ul>
-        <hr>
-        <p style="font-size: 12px; color: #888;">Automated daily search agent for Shiffalli's Ph.D. / Seneca RAQ career search.</p>
-      </body>
-    </html>
-    """
-
-    msg.attach(MIMEText(html_content, "html"))
-
-    if not SMTP_USER or not SMTP_PASS:
-        print("Error: SMTP credentials missing!")
-        return
-
-    server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-    server.starttls()
-    server.login(SMTP_USER, SMTP_PASS)
-    server.sendmail(SMTP_USER, EMAIL_TO, msg.as_string())
-    server.quit()
-    print("Email sent successfully!")
-
-if __name__ == "__main__":
-    send_email()
+      - name: Run script
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+        run: python main.py
