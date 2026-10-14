@@ -21,4 +21,11 @@ jobs:
         env:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
-        run: python main.py
+        run: |
+          if [ -f "main.py" ]; then
+            python main.py
+          elif [ -f "resume/main.py" ]; then
+            python resume/main.py
+          else
+            find . -name "main.py" -exec python {} \;
+          fi
